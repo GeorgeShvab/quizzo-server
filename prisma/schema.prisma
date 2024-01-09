@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int            @id @unique @default(autoincrement())
+  name          String
+  email         String
+  password      String
+  quizes        Quiz[]
+  sessions      Session[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+}
+
+model Quiz {
+  id        Int        @id @unique @default(autoincrement())
+  title     String
+  questions Question[]
+  owner     User       @relation(fields: [ownerId], references: [id])
+  ownerId   Int
+  sessions  Session[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Question {
+  id              Int               @id @unique @default(autoincrement())
+  title           String
+  position        Int
+  variants        String[]
+  answer          Int
+  quizId          Int
+  quiz            Quiz              @relation(fields: [quizId], references: [id])
+  answers         Answer[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  SessionQuestion SessionQuestion[]
+}
+
+model Session {
+  id              Int               @id @unique @default(autoincrement())
+  status          String            @default("created")
+  quizId          Int
+  quiz            Quiz              @relation(fields: [quizId], references: [id])
+  owner           User              @relation(fields: [ownerId], references: [id])
+  ownerId         Int
+  participants    Participant[]
+  answers         Answer[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  SessionQuestion SessionQuestion[]
+}
+
+model SessionQuestion {
+  id         Int      @id @unique @default(autoincrement())
+  sessionId  Int
+  session    Session  @relation(fields: [sessionId], references: [id])
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Participant {
+  id        Int      @id @unique @default(autoincrement())
+  sessionId Int
+  session   Session  @relation(fields: [sessionId], references: [id])
+  avatar    String
+  name      String
+  points    Int?
+  answers   Answer[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Answer {
+  id            Int         @id @unique @default(autoincrement())
+  answer        Int
+  sessionId     Int
+  session       Session     @relation(fields: [sessionId], references: [id])
+  participantId Int
+  participant   Participant @relation(fields: [participantId], references: [id])
+  questionId    Int
+  question      Question    @relation(fields: [questionId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model RefreshToken {
+  id     Int    @id @unique @default(autoincrement())
+  token  String
+  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+}
